@@ -5,9 +5,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from shared.utility import send_email, send_phone_code
-from .serializers import SignUpSerializer, ChangeUserInformation, ChangeUserPhotoSerializer
+from .serializers import SignUpSerializer, ChangeUserInformation, ChangeUserPhotoSerializer, LoginSerializer
 from .models import *
 from rest_framework.generics import CreateAPIView
 
@@ -127,3 +129,11 @@ class ChangeUserPhotoView(APIView):
                     "message": "Rasm muvofaqiyatli o'zgartirildi!"
                 }, status=200)
         return Response(serializer.errors, status=400)
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = LoginSerializer
+
+
+class LoginRefreshView(TokenRefreshView):
+    serializer_class = TokenRefreshSerializer
