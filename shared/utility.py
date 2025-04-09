@@ -90,7 +90,7 @@ def send_phone_code(phone, code):
     client = Client(account_sid, auth_token)
     client.messages.create(
         body=f"Sizning tasdiqlash kodingiz: {code}\n",
-        from_="+998991112233",
+        from_="+998889480405",
         to=f"{phone}"
     )
     
