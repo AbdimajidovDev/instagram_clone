@@ -15,6 +15,7 @@ username_regex = re.compile(r"^[a-zA-Z0-9_.-]+$")
 
 def check_email_or_phone(email_or_phone):
     phone_number = phonenumbers.parse(email_or_phone)
+
     if re.fullmatch(email_regex, email_or_phone):
         email_or_phone = "email"
     elif phonenumbers.is_valid_number(phone_number):
@@ -47,29 +48,32 @@ def check_user_tupe(user_input):
     return user_input
 
 
-class EmailThreed(threading.Thread):
+class EmailThreed(threading.Thread):  # threading.Thread -> dasturga halal bermagan holda u bn paralel ishlashi uchun
+
     def __init__(self, email):
         self.email = email
         threading.Thread.__init__(self)
 
-    def run(self):
+    def run(self): # ishga tushirish uchun
         self.email.send()
 
 
 class Email:
+
     @staticmethod
     def send_email(data):
         email = EmailMessage(
             subject=data['subject'],
             body=data['body'],
-            to=[data['to_email']]
+            to=[data['to_email']] # qaysi emailga yuborish
         )
-        if data.get('content_type') == 'html':
+
+        if data.get('content_type') == 'html': # data ni tekshirish
             email.content_subtype = 'html'
         EmailThreed(email).start()
 
 
-def send_email(email, code):
+def send_email(email, code): # emailga code yuborish
     html_content = render_to_string(
         'email/authentication/activate_account.html',
         {'code': code}

@@ -43,6 +43,7 @@ class VerifyAPIView(APIView):
     @staticmethod
     def check_verify(user, code):
         verifies = user.verify_codes.filter(expiration_time__gte=datetime.now(), code=code, is_confirmed=False)
+
         if not verifies.exists():
             data = {
                 'message': 'Tasdiqlash kodingiz xato yoki eskirgan!'
@@ -50,6 +51,7 @@ class VerifyAPIView(APIView):
             raise ValidationError(data)
         else:
             verifies.update(is_confirmed=True)
+
         if user.auth_status == NEW:
             user.auth_status = CODE_VERIFIED
             user.save()
@@ -62,6 +64,7 @@ class GetNewVerification(APIView):
     def get(self, request, *args, **kwargs):
         user = self.request.user
         self.check_verification(user)
+
         if user.auth_type == VIA_EMAIL:
             code = user.create_verify_code(VIA_EMAIL)
             send_email(user.email, code)
@@ -84,6 +87,7 @@ class GetNewVerification(APIView):
     @staticmethod
     def check_verification(user):
         verifies = user.verify_codes.filter(expiration_time__gte=datetime.now(), is_confirmed=False)
+
         if verifies.exists():
             data = {
                 'message': "Kodingiz hali ishlatish uchun yaroqli. Biroz kutib turing"
@@ -170,6 +174,7 @@ class ForgetPasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         email_or_phone = serializer.validated_data.get('email_or_phone')
         user = serializer.validated_data.get('user')
+
         if check_email_or_phone(email_or_phone) == 'phone_number':
             code = user.create_verify_code(VIA_PHONE)
             send_email(email_or_phone, code)

@@ -1,23 +1,23 @@
+from django.db.models import Q
+from django.core.validators import FileExtensionValidator
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
-from django.core.validators import FileExtensionValidator
+from rest_framework import serializers, exceptions
 from rest_framework.generics import get_object_or_404
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer, TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import AccessToken
-from shared.utility import check_email_or_phone, send_email, check_user_tupe
-from .models import *
-from rest_framework import exceptions
-from django.db.models import Q
-from rest_framework import serializers
 from rest_framework.exceptions import ValidationError, PermissionDenied, NotFound
+
+from .models import *
+from shared.utility import check_email_or_phone, send_email, check_user_tupe
 
 
 
 class SignUpSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs): # modelga bog'liq bo'lmagan yangi field qo'shish
         super(SignUpSerializer, self).__init__(*args, **kwargs)
         self.fields['email_phone_number'] = serializers.CharField(required=False)
 
@@ -29,9 +29,10 @@ class SignUpSerializer(serializers.ModelSerializer):
             'auth_status': {'read_only': True, 'required': False},
         }
 
-    def create(self, validated_data):
+    def create(self, validated_data): # tasdiqlangan email yoki raqamga kod yaratadi
         user = super(SignUpSerializer, self).create(validated_data)
         print(user)
+
         if user.auth_type == VIA_EMAIL:
             code = user.create_verify_code(VIA_EMAIL)
             send_email(user.email, code)
@@ -47,12 +48,12 @@ class SignUpSerializer(serializers.ModelSerializer):
         data = self.auth_validate(data)
         return data
 
-
     @staticmethod
     def auth_validate(data):
         print('data: ', data)
         user_input = str(data.get('email_phone_number')).lower()
         input_type = check_email_or_phone(user_input)
+
         if input_type == 'email':
             data = {
                 'email': user_input,
@@ -74,6 +75,7 @@ class SignUpSerializer(serializers.ModelSerializer):
 
     def validate_email_phone_number(self, value):
         value = value.lower()
+
         if value and User.objects.filter(email=value).exists():
             data = {
                 'success': False,
@@ -88,7 +90,7 @@ class SignUpSerializer(serializers.ModelSerializer):
             raise ValidationError(data)
         return value
 
-    def to_representation(self, instance):
+    def to_representation(self, instance): # dataga qo'shimcha biror narsa qo'shib yuborish
         print('to_rep: ', instance)
         data = super(SignUpSerializer, self).to_representation(instance)
         data.update(instance.token())
@@ -105,12 +107,14 @@ class ChangeUserInformation(serializers.Serializer):
     def validate(self, data):
         password = data.get('password', None)
         confirm_password = data.get('confirm_password', None)
+
         if password != confirm_password:
             raise ValidationError(
                 {
                     "message": "Parolingiz va tasdiqlash parolingiz bir-biriga teng emas."
                 }
             )
+
         if password:
             validate_password(password)
             validate_password(confirm_password)
@@ -123,6 +127,7 @@ class ChangeUserInformation(serializers.Serializer):
                     'message': "Username must be between 5 and 30 characters long"
                 }
             )
+
         if username.isdigit():
             raise ValidationError(
                 {
@@ -169,8 +174,10 @@ class ChangeUserInformation(serializers.Serializer):
         instance.last_name = validate_data.get('last_name', instance.last_name)
         instance.password = validate_data.get('password', instance.password)
         instance.username = validate_data.get('username', instance.username)
+
         if validate_data.get('password'):
             instance.set_password(validate_data.get('password'))
+
         if instance.auth_status == CODE_VERIFIED:
             instance.auth_status = DONE
         instance.save()
@@ -184,6 +191,7 @@ class ChangeUserPhotoSerializer(serializers.Serializer):
 
     def update(self, instance, validate_data):
         photo = validate_data.get('photo')
+
         if photo:
             instance.photo = photo
             instance.auth_status = PHOTO_DONE
@@ -200,6 +208,7 @@ class LoginSerializer(TokenObtainPairSerializer):
 
     def auth_validate(self, data):
         user_input = data.get('userinput')  # email, phone_number, username
+
         if check_user_tupe(user_input) == 'username':
             username = user_input
         elif check_user_tupe(user_input) == 'email': # __iexact ->  abs@gmail.com = Abs@gmail.com katta kichik harfga etibor bermasligi uchun
@@ -231,6 +240,7 @@ class LoginSerializer(TokenObtainPairSerializer):
             })
 
         user = authenticate(**authentication_kwargs)
+
         if user is not None:
             self.user = user
         else:
@@ -241,6 +251,7 @@ class LoginSerializer(TokenObtainPairSerializer):
 
     def validate(self, data):
         self.auth_validate(data)
+
         if self.user.auth_status not in [DONE, PHOTO_DONE]:
             raise PermissionError("Siz login qila olmaysiz. Ruxsatingiz yo'q!")
         data = self.user.token()
@@ -249,6 +260,7 @@ class LoginSerializer(TokenObtainPairSerializer):
 
     def get_user(self, **kwargs):
         users = User.objects.filter(**kwargs)
+
         if not users.exists():
             raise ValidationError(
                 {
@@ -284,6 +296,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
                 'message': "Email yoki telefon raqami kiritilishi shart!"
             })
         user = User.objects.filter(Q(phone_number=email_or_phone) | Q(email=email_or_phone))
+
         if not user.exists():
             raise NotFound(detail="User not found")
         attrs['user'] = user.first()
@@ -304,16 +317,18 @@ class ResetPasswordSerializer(serializers.Serializer):
         confirm_password = data.get('confirm_password', None)
         print('pass: ', password)
         print('con_pass: ',confirm_password)
+
         if password != confirm_password:
             raise ValidationError({
                 'success': False,
                 'message': "Parolingiz qiymati bir-biriga teng emas!"
             })
+
         if password:
             validate_password(password)
         return data
 
-    def update(self, instance, validate_data):
-        password = validate_data.pop('password')
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password')
         instance.set_password(password)
-        return super(ResetPasswordSerializer, self).update(instance, validate_data)
+        return super(ResetPasswordSerializer, self).update(instance, validated_data)
