@@ -13,6 +13,7 @@ class PostSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
     author = UserSerializer(read_only=True)
     post_likes_count = serializers.SerializerMethodField('get_post_likes_count')
+    post_comments_count = serializers.SerializerMethodField('get_post_comments_count')
     me_liked = serializers.SerializerMethodField('get_me_liked')
 
     class Meta:
@@ -23,17 +24,19 @@ class PostSerializer(serializers.ModelSerializer):
             'image',
             'caption',
             'created_time',
-            'post_likes',
+            'post_likes_count',
             'post_comments_count',
             'me_liked'
         )
+
+        extra_kwargs = {'image': {'required': False}}  # put qilguncha rasmni qayta talab qilmasligi uchun
 
 
     def get_post_likes_count(self, obj):
         return obj.likes.count()
 
-    def get_post_comment_count(self, obj):
-        return obj.comment.count()
+    def get_post_comments_count(self, obj):
+        return obj.comments.count()
 
     def get_me_liked(self, obj):
         request = self.context.get('request', None)
