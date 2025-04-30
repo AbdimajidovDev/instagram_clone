@@ -7,7 +7,7 @@ from post.views import (PostListAPIView,
                         PostLikeListView,
                         CommentRetrieveAPIView,
                         CommentLikeListView,
-                        LikeListView,)
+                        LikeListView, PostLikeAPIView, )
 
 urlpatterns = [
     path('list/', PostListAPIView.as_view()),
@@ -23,4 +23,5 @@ urlpatterns = [
 
     path('comments/', CommentListCreateAPIView.as_view()),
     path('comments/<uuid:pk>/', CommentRetrieveAPIView.as_view()),
+    path('<uuid:pk>/create-delete-like/', PostLikeAPIView.as_view()),
 ]

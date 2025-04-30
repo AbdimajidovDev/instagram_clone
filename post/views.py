@@ -1,6 +1,8 @@
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST, HTTP_204_NO_CONTENT
+from rest_framework.views import APIView
 
 from .models import Post, PostComment, PostLike, CommentLike
 from .serializers import PostSerializer, PostLikeSerializer, CommentSerializer, CommentLikeSerializer
@@ -118,3 +120,47 @@ class LikeListView(generics.ListAPIView):
     queryset = PostLike.objects.all()
 
 
+class PostLikeAPIView(APIView):
+
+    def post(self, request, pk):
+        try:
+            post_like = PostLike.objects.create(
+                author=self.request.user,
+                post_id=pk
+            )
+            serializer = PostLikeSerializer(post_like)
+            data = {
+                'success': True,
+                'message': "Postga layk muvoffaqiyatli qo'shildi",
+                'data': serializer.data
+            }
+            return Response(data, status=HTTP_201_CREATED)
+        except Exception as e:
+            data = {
+                'success': False,
+                'message': str(e),
+                'data': None
+            }
+            return Response(data, status=HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+
+        try:
+            post_like = PostLike.objects.get(
+                author=self.request.user,
+                post_id=pk
+            )
+            post_like.delete()
+            data = {
+                'success': True,
+                'message': "Like muvoffaqiyatli o'chirildi",
+                'data': None
+            }
+            return Response(data, status=HTTP_204_NO_CONTENT)
+        except Exception as e:
+            data = {
+                'success': False,
+                'message': str(e),
+                'data': None
+            }
+            return Response(data, status=HTTP_400_BAD_REQUEST)
