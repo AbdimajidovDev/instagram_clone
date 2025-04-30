@@ -1,8 +1,12 @@
 from django.urls import path
-from post.views import PostListAPIView, PostCreateView, PostRetrieveUpdateDestroyView
+from post.views import PostListAPIView, PostCreateView, PostRetrieveUpdateDestroyView, PostCommentListView, \
+    CommentListCreateAPIView
 
 urlpatterns = [
-    path('posts/', PostListAPIView.as_view()),
-    path('posts/create/', PostCreateView.as_view()),
-    path('posts/<uuid:pk>/', PostRetrieveUpdateDestroyView.as_view()),
+    path('list/', PostListAPIView.as_view()),
+    path('create/', PostCreateView.as_view()),
+    path('<uuid:pk>/', PostRetrieveUpdateDestroyView.as_view()),
+    path('<uuid:pk>/comments/', PostCommentListView.as_view()),
+    path('<uuid:pk>/comments/create/', CommentListCreateAPIView.as_view()),
+    path('comments/', CommentListCreateAPIView.as_view())
 ]
