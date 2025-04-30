@@ -73,7 +73,6 @@ class PostCommentCreateView(generics.CreateAPIView):
         serializer.save(author=self.request.user, post_id=post_id)
 
 
-
 class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated, ]
@@ -85,4 +84,37 @@ class CommentListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+
+class CommentRetrieveAPIView(generics.RetrieveAPIView):
+    serializer_class = CommentSerializer
+    permission_classes = [AllowAny,]
+    queryset = PostComment.objects.all()
+
+
+class PostLikeListView(generics.ListAPIView):
+    serializer_class = PostLikeSerializer
+    permission_classes = [AllowAny, ]
+    queryset = PostLike.objects.all()
+
+    def get_object(self):
+        post_id = self.kwargs['pk']
+        return PostLike.objects.filter(post_id=post_id)
+
+
+class CommentLikeListView(generics.ListAPIView):
+    serializer_class = CommentLikeSerializer
+    permission_classes = [AllowAny, ]
+
+    def get_queryset(self):
+        comment_id = self.kwargs['pk']
+        return CommentLike.objects.filter(comment_id=comment_id)
+
+
+class LikeListView(generics.ListAPIView):
+    serializer_class = PostLikeSerializer
+    permission_classes = [AllowAny, ]
+    pagination_class = CustomPagination
+    queryset = PostLike.objects.all()
+
 
