@@ -112,8 +112,8 @@ class ChangeUserInformationView(UpdateAPIView):
         }
         return Response(data, status=200)
 
-    def partialupdate(self, request, *args, **kwargs):
-        super(ChangeUserInformationView, self).update(request, *args, *kwargs)
+    def partial_update(self, request, *args, **kwargs):
+        super(ChangeUserInformationView, self).partial_update(request, *args, *kwargs)
         data = {
             'success': True,
             'message': "User update succesfully",
